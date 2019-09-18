@@ -61,16 +61,26 @@ vector<Vertex> unpackIndexedData(const vector<Vec3f>& positions,const vector<Vec
 	// just write 'auto' instead of having to spell out 'array<unsigned, 6>'.
 	for (auto& f : faces) {
 
+
 		// YOUR CODE HERE (R3)
 		// Unpack the indexed data into a vertex array. For every face, you have to
 		// create three vertices and add them to the vector 'vertices'.
-		//f[0]= positions[0];
-		//f[1] = normals[0];
+		Vertex v0, v1, v2;
+		v0 = {};
+		v1 = {};
+		v2 = {};
 
+			v0.position = positions[f[0]];
+			v0.normal = normals[f[1]];
+			v1.position = positions[f[2]];
+			v1.normal = normals[f[3]];
+			v2.position = positions[f[4]];
+			v2.normal = normals[f[5]];
 		// f[0] is the index of the position of the first vertex
 		// f[1] is the index of the normal of the first vertex
 		// f[2] is the index of the position of the second vertex
 		// ...
+			vertices.push_back(v0); vertices.push_back(v1); vertices.push_back(v2);
 	}
 
 	return vertices;
@@ -178,6 +188,12 @@ App::App(void)
 	window_.addListener(&common_ctrl_);
 
 	window_.setSize( Vec2i(800, 800) );
+	//init matrix
+	current_Translation.setZero();
+	current_Translation.m00 = 1;
+	current_Translation.m11 = 1;
+	current_Translation.m22 = 1;
+	current_Translation.m33 = 1;
 }
 
 bool App::handleEvent(const Window::Event& ev) {
@@ -226,31 +242,41 @@ bool App::handleEvent(const Window::Event& ev) {
 		// YOUR CODE HERE (R1)
 		if (ev.key == FW_KEY_RIGHT)
 			current_Translation.m03 += 0.1f;
-		else if (ev.key == FW_KEY_LEFT)
-			current_Translation.m03 += -0.1f;
-		else if (ev.key == FW_KEY_UP)
+		else if (ev.key == FW_KEY_LEFT) 
+			current_Translation.m03 -= 0.1f;
+		else if (ev.key == FW_KEY_UP) 
 			current_Translation.m13 += 0.1f;
-		else if (ev.key == FW_KEY_DOWN)
-			current_Translation.m13 += -0.1f;
+		else if (ev.key == FW_KEY_DOWN) 
+			current_Translation.m13 -= 0.1f;
 		else if (ev.key == FW_KEY_A) {
-			current_angle += 20;
+			current_angle += 10.0f / 180.0f * FW_PI;
+			current_Rotation.setZero();
+			current_Rotation.m11 = 1;
+			current_Rotation.m33 = 1;
 			current_Rotation.m00 = FW::cos(current_angle);
-			current_Rotation.m02 = FW::sin(current_angle);
 			current_Rotation.m20 = -FW::sin(current_angle);
+			current_Rotation.m02 = FW::sin(current_angle);
 			current_Rotation.m22 = FW::cos(current_angle);
+			
 		}
 		else if (ev.key == FW_KEY_D){
-			current_angle -= 20;
+			current_angle -= 10.0f / 180.0f * FW_PI;
+			current_Rotation.setZero();
 			current_Rotation.m00 = FW::cos(current_angle);
-			current_Rotation.m02 = FW::sin(current_angle);
 			current_Rotation.m20 = -FW::sin(current_angle);
+			current_Rotation.m02 = FW::sin(current_angle);
 			current_Rotation.m22 = FW::cos(current_angle);
+			current_Rotation.m11 = 1;
+			current_Rotation.m33 = 1;
 		}
 		else if (ev.key == FW_KEY_W) {
 			current_Scale.m00 += 0.1f;
+			current_Scale.m33 = 1.0f;
+
 		}
 		else if (ev.key == FW_KEY_S) {
 			current_Scale.m00 -= 0.1f;
+			current_Scale.m33 = 1.0f;
 		}
 	
 
@@ -277,6 +303,9 @@ bool App::handleEvent(const Window::Event& ev) {
 		// Event::mouseDragging tells whether some mouse buttons are currently down.
 		// If you want to know which ones, you have to keep track of the button down/up events
 		// (e.g. FW_KEY_MOUSE_LEFT).
+		if (ev.key == FW_KEY_MOUSE_LEFT)
+			camera_rotation_angle_ -= 0.05 * FW_PI;
+
 	}
 
 	if (ev.type == Window::EventType_Close) {
@@ -426,7 +455,8 @@ void App::render() {
 	// YOUR CODE HERE (R1)
 	// Set the model space -> world space transform to translate the model according to user input.
 	Mat4f modelToWorld;
-	modelToWorld = current_Rotation * current_Translation * current_Scale* modelToWorld;
+	modelToWorld = current_Scale  * current_Translation * current_Rotation *  modelToWorld;
+	//modelToWorld = current_Rotation * modelToWorld;
 	
 	// Draw the model with your model-to-world transformation.
 	glUniformMatrix4fv(gl_.model_to_world_uniform, 1, GL_FALSE, modelToWorld.getPtr());
@@ -482,10 +512,30 @@ vector<Vertex> App::loadObjFileModel(string filename) {
 			// Read the three vertex coordinates (x, y, z) into 'v'.
 			// Store a copy of 'v' in 'positions'.
 			// See std::vector documentation for push_back.
-		} else if (s == "vn") { // normal
+			v.setZero();
+			float i;
+			iss >> i;
+			v.x = i;
+			iss >> i;
+			v.y = i;
+			iss >> i;
+			v.z = i;
+			positions.push_back(v);
+		} 
+		else if (s == "vn") { // normal
 			// YOUR CODE HERE (R4)
 			// Similar to above.
-		} else if (s == "f") { // face
+			v.setZero();
+			float i;
+			iss >> i;
+			v.x = i;
+			iss >> i;
+			v.y = i;
+			iss >> i;
+			v.z = i;
+			normals.push_back(v);
+		} 
+		else if (s == "f") { // face
 			// YOUR CODE HERE (R4)
 			// Read the indices representing a face and store it in 'faces'.
 			// The data in the file is in the format
@@ -498,7 +548,30 @@ vector<Vertex> App::loadObjFileModel(string filename) {
 			// the texture indices by reading them into a temporary variable.
 
 			unsigned sink; // Temporary variable for reading the unused texture indices.
-
+			
+			//vector<array<unsigned, 6>> faces;
+			//first vertex
+			iss >> sink;
+			f[0] = sink - 1;
+			iss >> sink;
+			iss >> sink;
+			f[1] = sink - 1;
+			//second vertex
+			iss >> sink;
+			f[2] = sink - 1;
+			iss >> sink;
+			iss >> sink;
+			f[3] = sink - 1;
+			//
+			//third vertex
+			iss >> sink;
+			f[4] = sink - 1;
+			iss >> sink;
+			iss >> sink;
+			f[5] = sink - 1;
+			cout << f[0] << " " << f[1] << " " << f[2] << " " << f[3] << " " << f[4] << " " << f[5] << endl;
+			//add the new face to faces array
+			faces.push_back(f);
 			// Note that in C++ we index things starting from 0, but face indices in OBJ format start from 1.
 			// If you don't adjust for that, you'll index past the range of your vectors and get a crash.
 

@@ -66,7 +66,10 @@ namespace FW {
 		// Add a class member to store the current translation.
 		Mat4f				current_Translation;
 		Mat4f				current_Rotation;
-		float				current_angle;
+		float				current_angle = 0;
+		float				current_transx = 0;
+		float				current_transy = 0;
+		float				current_scalex = 0;
 		Mat4f				current_Scale;
 
 		// EXTRA:
