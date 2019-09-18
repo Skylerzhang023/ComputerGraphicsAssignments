@@ -139,9 +139,9 @@ vector<Vertex> loadUserGeneratedModel() {
 		// Calculate the normal of the face from the positions and use it for all vertices.
 		// v0.normal = v1.normal = v2.normal = ...;
 		//height =1 radius = 0.25
-		v0.position = Vec3f(0.0f, 1.0f, 0.0f);
-		v1.position = Vec3f(FW::cos(i*9.0f/180*FW_PI)*0.25f, 0.0f , FW::sin(i * 9.0f / 180 * FW_PI) * 0.25f);
-		v2.position = Vec3f(FW::cos((i+1) * 9.0f / 180 * FW_PI) * 0.25f, 0.0f , FW::sin((i + 1) * 9.0f / 180 * FW_PI) * 0.25f);
+		v0.position = Vec3f(0.0f, 0.0f, 0.0f);
+		v1.position = Vec3f(FW::cos(i*9.0f/180*FW_PI)*0.25f, -1.0f , FW::sin(i * 9.0f / 180 * FW_PI) * 0.25f);
+		v2.position = Vec3f(FW::cos((i+1) * 9.0f / 180 * FW_PI) * 0.25f, -1.0f, FW::sin((i + 1) * 9.0f / 180 * FW_PI) * 0.25f);
 		v0.normal = cross(v0.position, v1.position);
 		v0.normal.normalize();
 		v1.normal = v0.normal;
@@ -278,10 +278,16 @@ bool App::handleEvent(const Window::Event& ev) {
 			current_Scale.m00 -= 0.1f;
 			current_Scale.m33 = 1.0f;
 		}
-	
-
-
-
+		else if (ev.key == FW_KEY_R) {
+			if (!IsAnimationOn) {
+				IsAnimationOn = true;
+				timer_.start();
+			}
+			else {
+				IsAnimationOn = false;
+				timer_.unstart();
+			}
+		}
 		// React to user input and move the model.
 		// Look in framework/gui/Keys.hpp for more key codes.
 		// Visual Studio tip: you can right-click an identifier like FW_KEY_HOME
@@ -303,8 +309,8 @@ bool App::handleEvent(const Window::Event& ev) {
 		// Event::mouseDragging tells whether some mouse buttons are currently down.
 		// If you want to know which ones, you have to keep track of the button down/up events
 		// (e.g. FW_KEY_MOUSE_LEFT).
-		if (ev.key == FW_KEY_MOUSE_LEFT)
-			camera_rotation_angle_ -= 0.05 * FW_PI;
+		//if (ev.key == FW_KEY_MOUSE_LEFT)
+			//camera_rotation_angle_ -= Event::mouseDelta*0.05 * FW_PI;
 
 	}
 
@@ -313,6 +319,10 @@ bool App::handleEvent(const Window::Event& ev) {
 		delete this;
 		return true;
 	}
+
+	//animation
+	if(IsAnimationOn)
+		camera_rotation_angle_ += 0.05 * FW_PI * timer_.end();
 
 
 	window_.setVisible(true);
@@ -417,7 +427,9 @@ void App::render() {
 	
 	// Enable depth testing.
 	glEnable(GL_DEPTH_TEST);
-	
+
+	glViewport(0,0, 800, 800);
+		//= Window::getSize();
 	// Set up a matrix to transform from world space to clip space.
 	// Clip space is a [-1, 1]^3 space where OpenGL expects things to be
 	// when it starts drawing them.
