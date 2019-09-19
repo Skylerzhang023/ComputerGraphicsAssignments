@@ -140,9 +140,9 @@ vector<Vertex> loadUserGeneratedModel() {
 		// v0.normal = v1.normal = v2.normal = ...;
 		//height =1 radius = 0.25
 		v0.position = Vec3f(0.0f, 0.0f, 0.0f);
-		v1.position = Vec3f(FW::cos(i*9.0f/180*FW_PI)*0.25f, -1.0f , FW::sin(i * 9.0f / 180 * FW_PI) * 0.25f);
-		v2.position = Vec3f(FW::cos((i+1) * 9.0f / 180 * FW_PI) * 0.25f, -1.0f, FW::sin((i + 1) * 9.0f / 180 * FW_PI) * 0.25f);
-		v0.normal = cross(v0.position, v1.position);
+		v1.position = Vec3f(FW::cos(i*9.0f/180.0f*FW_PI)*0.25f, -1.0f , FW::sin(i * 9.0f / 180.0f * FW_PI) * 0.25f);
+		v2.position = Vec3f(FW::cos((i+1) * 9.0f / 180.0f * FW_PI) * 0.25f, -1.0f, FW::sin((i + 1) * 9.0f / 180.0f * FW_PI) * 0.25f);
+		v0.normal = -cross(v1.position-v0.position, v2.position-v0.position);
 		v0.normal.normalize();
 		v1.normal = v0.normal;
 		v2.normal = v0.normal;
@@ -393,15 +393,13 @@ void App::initRendering() {
 		void main()
 		{
 			// EXTRA: oops, someone forgot to transform normals here...
-			//aNormal = uWorldToClip * uModelToWorld * aNormal;
-
-			float clampedCosine = clamp(dot(aNormal, directionToLight), 0.0, 1.0);
+			vec4 normal = uWorldToClip * uModelToWorld * vec4(aNormal, 0.0);
+			float clampedCosine = clamp(dot(vec3(normal), directionToLight), 0.0, 1.0);
 			vec3 litColor = vec3(clampedCosine);
 			vec3 generatedColor = distinctColors[gl_VertexID % 6];
 			// gl_Position is a built-in output variable that marks the final position
 			// of the vertex in clip space. Vertex shaders must write in it.
 			gl_Position = uWorldToClip * uModelToWorld * aPosition;
-			//gl_Normal = uWorldToClip * uModelToWorld * aNormal;
 			vColor = vec4(mix(generatedColor, litColor, uShading), 1);
 			
 		}
