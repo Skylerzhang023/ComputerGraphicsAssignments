@@ -374,14 +374,15 @@ void App::initRendering() {
 	// It consists of one vertex shader and one fragment shader.
 	auto shader_program = new GLContext::Program(
 		"#version 330\n"
+		//vertex shader
 		FW_GL_SHADER_SOURCE(
 		layout(location = 0) in vec4 aPosition;
 		layout(location = 1) in vec3 aNormal;
 		
 		out vec4 vColor;
 		
-		uniform mat4 uModelToWorld;
-		uniform mat4 uWorldToClip;
+		uniform mat4 uModelToWorld;		//matrix for rendering model to world
+		uniform mat4 uWorldToClip;		//matrix for rendering world to camera view
 		uniform float uShading;
 		
 		const vec3 distinctColors[6] = vec3[6](
@@ -392,15 +393,21 @@ void App::initRendering() {
 		void main()
 		{
 			// EXTRA: oops, someone forgot to transform normals here...
+			//aNormal = uWorldToClip * uModelToWorld * aNormal;
+
 			float clampedCosine = clamp(dot(aNormal, directionToLight), 0.0, 1.0);
 			vec3 litColor = vec3(clampedCosine);
 			vec3 generatedColor = distinctColors[gl_VertexID % 6];
 			// gl_Position is a built-in output variable that marks the final position
 			// of the vertex in clip space. Vertex shaders must write in it.
 			gl_Position = uWorldToClip * uModelToWorld * aPosition;
+			//gl_Normal = uWorldToClip * uModelToWorld * aNormal;
 			vColor = vec4(mix(generatedColor, litColor, uShading), 1);
+			
 		}
 		),
+		//fragment shader
+
 		"#version 330\n"
 		FW_GL_SHADER_SOURCE(
 		in vec4 vColor;
@@ -409,7 +416,8 @@ void App::initRendering() {
 		{
 			fColor = vColor;
 		}
-		));
+		)
+			);
 	// Tell the FW about the program so it gets properly destroyed at exit.
 	ctx->setProgram("shaders", shader_program);
 
