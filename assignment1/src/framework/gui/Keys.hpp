@@ -226,7 +226,7 @@ namespace FW
 #define FW_KEY_VERTICAL_BAR         "U+007C"                // The Vertical Line (Vertical Bar, Pipe) key (|).
 #define FW_KEY_RIGHT_CURLY_BRACKET  "U+007D"                // The Right Curly Bracket (Closing Curly Bracket, Closing Brace, Brace Right) key (}).
 #define FW_KEY_DELETE               "U+007F"                // The Delete (Del) Key.
-#define FW_KEY_INVERTED_EXCLAMATION "U+00A1"                // The Inverted Exclamation Mark key (¡).
+#define FW_KEY_INVERTED_EXCLAMATION "U+00A1"                // The Inverted Exclamation Mark key (?.
 #define FW_KEY_DEAD_GRAVE           "U+0300"                // The Combining Grave Accent (Greek Varia, Dead Grave) key.
 #define FW_KEY_DEAD_ACUTE           "U+0301"                // The Combining Acute Accent (Stress Mark, Greek Oxia, Tonos, Dead Eacute) key.
 #define FW_KEY_DEAD_CIRCUMFLEX      "U+0302"                // The Combining Circumflex Accent (Hat, Dead Circumflex) key.

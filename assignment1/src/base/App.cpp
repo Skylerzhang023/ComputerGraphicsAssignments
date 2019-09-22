@@ -169,7 +169,11 @@ App::App(void)
 	model_changed_			(true),
 	shading_toggle_			(false),
 	shading_mode_changed_	(false),
-	camera_rotation_angle_	(0.0f)
+	camera_rotation_angle_	(0.0f),
+	camera_rotation_angle_y (0.0f),
+	IsTrackball_Activated	(false),
+	Trackball_toggle_		(false)
+
 {
 	static_assert(is_standard_layout<Vertex>::value, "struct Vertex must be standard layout to use offsetof");
 	initRendering();
@@ -179,6 +183,9 @@ App::App(void)
 	common_ctrl_.addToggle((S32*)&current_model_, MODEL_USER_GENERATED,		FW_KEY_2, "Generated cone (2)",			&model_changed_);
 	common_ctrl_.addToggle((S32*)&current_model_, MODEL_FROM_INDEXED_DATA,	FW_KEY_3, "Unpacked tetrahedron (3)",	&model_changed_);
 	common_ctrl_.addToggle((S32*)&current_model_, MODEL_FROM_FILE,			FW_KEY_4, "Model loaded from file (4)",	&model_changed_);
+	common_ctrl_.addSeparator();
+	common_ctrl_.addToggle(&Trackball_toggle_,								FW_KEY_B, "Toggle Virtual Trackball (B)", &IsTrackball_Activated);
+	//common_ctrl_.addToggle(&shading_toggle_,								FW_KEY_F, "Toggle Trackball Friction (F)", &shading_mode_changed_);
 	common_ctrl_.addSeparator();
 	common_ctrl_.addToggle(&shading_toggle_,								FW_KEY_T, "Toggle shading mode (T)",	&shading_mode_changed_);
 
@@ -236,6 +243,11 @@ bool App::handleEvent(const Window::Event& ev) {
 			"High visibility shading, color from vertex ID");
 		shading_mode_changed_ = false;
 	}
+	if (IsTrackball_Activated) {
+		common_ctrl_.message(Trackball_toggle_ ? "trackball active" :
+			"trackball inactive");
+		IsTrackball_Activated = false;
+	}
 
 
 	if (ev.type == Window::EventType_KeyDown) {
@@ -248,6 +260,7 @@ bool App::handleEvent(const Window::Event& ev) {
 			current_Translation.m13 += 0.1f;
 		else if (ev.key == FW_KEY_DOWN) 
 			current_Translation.m13 -= 0.1f;
+		//WASD for rotate and scale the model
 		else if (ev.key == FW_KEY_A) {
 			current_angle += 10.0f / 180.0f * FW_PI;
 			current_Rotation.setZero();
@@ -278,6 +291,7 @@ bool App::handleEvent(const Window::Event& ev) {
 			current_Scale.m00 -= 0.1f;
 			current_Scale.m33 = 1.0f;
 		}
+		//Animation key R
 		else if (ev.key == FW_KEY_R) {
 			if (!IsAnimationOn) {
 				IsAnimationOn = true;
@@ -287,6 +301,32 @@ bool App::handleEvent(const Window::Event& ev) {
 				IsAnimationOn = false;
 				timer_.unstart();
 			}
+		}
+		//camera zoom
+		else if (ev.key == FW_KEY_Z)
+		{
+			camera_zoffset += 0.1f;
+		}
+		else if (ev.key == FW_KEY_X)
+		{
+			camera_zoffset -= 0.1f;
+		}
+		//camera moving
+		else if (ev.key == FW_KEY_J)
+		{
+			camera_xoffset += 0.1f;
+		}
+		else if (ev.key == FW_KEY_L)
+		{
+			camera_xoffset -= 0.1f;
+		}
+		else if (ev.key == FW_KEY_I)
+		{
+			camera_yoffset += 0.1f;
+		}
+		else if (ev.key == FW_KEY_K)
+		{
+			camera_yoffset -= 0.1f;
 		}
 		// React to user input and move the model.
 		// Look in framework/gui/Keys.hpp for more key codes.
@@ -309,9 +349,12 @@ bool App::handleEvent(const Window::Event& ev) {
 		// Event::mouseDragging tells whether some mouse buttons are currently down.
 		// If you want to know which ones, you have to keep track of the button down/up events
 		// (e.g. FW_KEY_MOUSE_LEFT).
-		//if (ev.key == FW_KEY_MOUSE_LEFT)
-			//camera_rotation_angle_ -= Event::mouseDelta*0.05 * FW_PI;
-
+		if (ev.mouseDragging ) {
+			//if(ev.key == FW_KEY_MOUSE_LEFT || ev.key == FW_KEY_MOUSE_MIDDLE)
+				camera_rotation_angle_ -= ev.mouseDelta.x * 0.005 * FW_PI;
+				if(Trackball_toggle_)
+					camera_rotation_angle_y -= ev.mouseDelta.y * 0.001 * FW_PI;
+		}
 	}
 
 	if (ev.type == Window::EventType_Close) {
@@ -443,15 +486,28 @@ void App::render() {
 	// Our camera is aimed at origin, and orbits around origin at fixed distance.
 	static const float camera_distance = 2.1f;	
 	Mat4f C;
-	Mat3f rot = Mat3f::rotation(Vec3f(0, 1, 0), -camera_rotation_angle_);
-	C.setCol(0, Vec4f(rot.getCol(0), 0));
-	C.setCol(1, Vec4f(rot.getCol(1), 0));
-	C.setCol(2, Vec4f(rot.getCol(2), 0));
-	C.setCol(3, Vec4f(0, 0, camera_distance, 1));
+	Mat3f rot,rot2;
+
+	//for trackball
 	
-	// Simple perspective.
+	if (Trackball_toggle_) {
+		rot = Mat3f::rotation(Vec3f(0, 1, 0), -camera_rotation_angle_) * Mat3f::rotation(Vec3f(0, 0, -1), -camera_rotation_angle_y);
+	}
+		
+	else {
+		rot = Mat3f::rotation(Vec3f(0, 1, 0), -camera_rotation_angle_) * Mat3f::rotation(Vec3f(0, 0, -1), -camera_rotation_angle_y);
+	}
+
+	C.setCol(0, Vec4f(normalize(rot.getCol(0)), 0));
+	C.setCol(1, Vec4f(normalize(rot.getCol(1)), 0));
+	C.setCol(2, Vec4f(normalize(rot.getCol(2)), 0));
+	C.setCol(3, Vec4f(camera_xoffset, -camera_yoffset, camera_distance+ camera_zoffset, 1));
+	
+	
+	// Simple perspective. 
 	static const float fnear = 0.1f, ffar = 4.0f;
 	Mat4f P;
+
 	P.setCol(0, Vec4f(1, 0, 0, 0));
 	P.setCol(1, Vec4f(0, 1, 0, 0));
 	P.setCol(2, Vec4f(0, 0, (ffar+fnear)/(ffar-fnear), 1));
@@ -587,7 +643,7 @@ vector<Vertex> App::loadObjFileModel(string filename) {
 			iss >> sink;
 			iss >> sink;
 			f[5] = sink - 1;
-			cout << f[0] << " " << f[1] << " " << f[2] << " " << f[3] << " " << f[4] << " " << f[5] << endl;
+			//cout << f[0] << " " << f[1] << " " << f[2] << " " << f[3] << " " << f[4] << " " << f[5] << endl;
 			//add the new face to faces array
 			faces.push_back(f);
 			// Note that in C++ we index things starting from 0, but face indices in OBJ format start from 1.

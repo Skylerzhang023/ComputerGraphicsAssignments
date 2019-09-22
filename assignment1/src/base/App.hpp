@@ -61,6 +61,12 @@ namespace FW {
 		std::vector<Vertex>	vertices_;
 
 		float				camera_rotation_angle_;
+		float				camera_rotation_angle_y;
+		bool				IsTrackball_Activated;
+		bool				Trackball_toggle_;
+		float				camera_zoffset=0;
+		float				camera_xoffset = 0;
+		float				camera_yoffset = 0;
 
 		// YOUR CODE HERE (R1)
 		// Add a class member to store the current translation.
@@ -71,6 +77,7 @@ namespace FW {
 		float				current_transy = 0;
 		float				current_scalex = 0;
 		Mat4f				current_Scale;
+
 
 		// EXTRA:
 		// For animation extra credit you can use the framework's Timer class.
