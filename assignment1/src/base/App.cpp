@@ -487,16 +487,17 @@ void App::render() {
 	static const float camera_distance = 2.1f;	
 	Mat4f C;
 	Mat3f rot,rot2;
+	Vec3f rotvec;
 
 	//for trackball
-	
-	if (Trackball_toggle_) {
-		rot = Mat3f::rotation(Vec3f(0, 1, 0), -camera_rotation_angle_) * Mat3f::rotation(Vec3f(0, 0, -1), -camera_rotation_angle_y);
-	}
-		
-	else {
-		rot = Mat3f::rotation(Vec3f(0, 1, 0), -camera_rotation_angle_) * Mat3f::rotation(Vec3f(0, 0, -1), -camera_rotation_angle_y);
-	}
+		if (camera_rotation_angle_y != 0 || camera_rotation_angle_ != 0)
+			rotvec = Vec3f(-camera_rotation_angle_y, -camera_rotation_angle_, pow(camera_distance,2)- pow(camera_rotation_angle_, 2)- pow(camera_rotation_angle_y, 2));
+		else
+			rotvec = Vec3f(0, 1, 0);
+			
+		rot = Mat3f::rotation(rotvec, 1) ;
+		//rot = Mat3f::rotation(Vec3f(0, 1, 0), -camera_rotation_angle_) * Mat3f::rotation(Vec3f(0, 0, -1), -camera_rotation_angle_y);
+
 
 	C.setCol(0, Vec4f(normalize(rot.getCol(0)), 0));
 	C.setCol(1, Vec4f(normalize(rot.getCol(1)), 0));
