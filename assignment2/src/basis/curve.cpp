@@ -128,7 +128,7 @@ Curve evalBezier(const vector<Vec3f>& P, unsigned steps, bool adaptive, float er
 
 	//P is the amout of control points
 
-	Curve R(steps * (P.size()/3));
+	Curve R(0);
 	Curve tmp(steps);
 	R.clear();
     cerr << "\t>>> evalBezier has been called with the following input:" << endl;
@@ -170,7 +170,7 @@ Curve evalBspline(const vector<Vec3f>& P, unsigned steps, bool adaptive, float e
 	BsplineMatrix.setRow(1, 1.0f / 6 * Vec4f(4, 0, -6, 3));
 	BsplineMatrix.setRow(2, 1.0f / 6 * Vec4f(1, 3, 3, -3));
 	BsplineMatrix.setRow(3, 1.0f / 6 * Vec4f(0, 0, 0, 1));
-	Curve Bspline(steps*(P.size()-3)-1);
+	Curve Bspline(0);
 	Curve tmp(steps);
 	//Bspline = evalBezier(P, steps, adaptive, errorbound, minstep);
     cerr << "\t>>> evalBSpline has been called with the following input:" << endl;
