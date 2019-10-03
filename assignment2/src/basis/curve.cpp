@@ -28,7 +28,8 @@ Curve coreBezier(const Vec3f& p0,
 				 const Vec3f& p2,
 				 const Vec3f& p3,
 				 const Vec3f& Binit,
-				 unsigned steps)
+				 unsigned steps,
+				bool isBpline)
 {
 	Curve R(steps + 1);
 
@@ -37,34 +38,48 @@ Curve coreBezier(const Vec3f& p0,
 
 	Mat4f B;
 	Mat4f G, T;
-	
+	Mat4f BsplineMatrix;
+
 	// ...
 	// set the bias matrix for bezier curve 
-	Vec4f Row0 = (1, -3, 3, -1);
-	Vec4f Row1 = (0, 3, -6, 3);
-	Vec4f Row2 = (0, 0, 3, -3);
-	Vec4f Row3 = (0, 0, 0, 1);
-	B.setRow(0, Row0);
-	B.setRow(1, Row1);
-	B.setRow(2, Row2);
-	B.setRow(3, Row3);
 
-	Vec4f Grow0 = (p0.x, p1.x, p2.x, p3.x);
-	Vec4f Grow1 = (p0.y, p1.y, p2.y, p3.y);
-	Vec4f Grow2 = (p0.z, p1.z, p2.z, p3.z);
-	G.setRow(0, Grow0);
-	G.setRow(1, Grow1);
-	G.setRow(2, Grow2);
+	B.setRow(0, Vec4f(1.0f, -3.0f, 3.0f, -1.0f));
+	B.setRow(1, Vec4f(0.0f, 3.0f, -6.0f, 3.0f));
+	B.setRow(2, Vec4f(0.0f, 0.0f, 3.0f, -3.0f));
+	B.setRow(3, Vec4f(0.0f, 0.0f, 0.0f, 1.0f));
 
+	// set the BsplineMatrix
+	BsplineMatrix.setRow(0, 1.0f / 6.0f * Vec4f(1.0f, -3.0f, 3.0f, -1.0f));
+	BsplineMatrix.setRow(1, 1.0f / 6.0f * Vec4f(4.0f, 0.0f, -6.0f, 3.0f));
+	BsplineMatrix.setRow(2, 1.0f / 6.0f * Vec4f(1.0f, 3.0f, 3.0f, -3.0f));
+	BsplineMatrix.setRow(3, 1.0f / 6.0f * Vec4f(0.0f, 0.0f, 0.0f, 1.0f));
+	
+
+	//set the geometry matrix
+	G.setRow(0, Vec4f(p0.x, p1.x, p2.x, p3.x));
+	G.setRow(1, Vec4f(p0.y, p1.y, p2.y, p3.y));
+	G.setRow(2, Vec4f(p0.z, p1.z, p2.z, p3.z));
+	G.setRow(2, Vec4f(0,0, 0, 0));
 
 
 	for (unsigned i = 0; i <= steps; ++i) {
 		// ...
-		Vec4f Tcol0 = (1, i,pow(i, 2), pow(i, 3));
-		T.setCol(0, Tcol0);
-		R[i].V.x = (G * B * T).m00;
-		R[i].V.x = (G * B * T).m01;
-		R[i].V.x = (G * B * T).m02;
+		// i is the index of spline point
+		float steplength = 1.0f / steps * i;
+		//Vec4f Tcol0 = (1, steplength,pow(steplength, 2), pow(steplength, 3));
+		T.setZero();
+		T.setCol(0, Vec4f(1, steplength, pow(steplength, 2), pow(steplength, 3)));
+		if (!isBpline) {
+			R[i].V.x = (G * B * T).m00;
+			R[i].V.y = (G * B * T).m10;
+			R[i].V.z = (G * B * T).m20;
+		}
+		else {
+			R[i].V.x = (G * BsplineMatrix * T).m00;
+			R[i].V.y = (G * BsplineMatrix * T).m10;
+			R[i].V.z = (G * BsplineMatrix * T).m20;
+		}
+
 
 	}
 
@@ -111,20 +126,21 @@ Curve evalBezier(const vector<Vec3f>& P, unsigned steps, bool adaptive, float er
     // receive have G1 continuity. The T, N and B vectors will not
 	// have to be defined at points where this does not hold.
 
-	//P is the amout 
+	//P is the amout of control points
 
-	Curve R(steps * (P.size()/3+1) + 1);
-	Curve tmp(steps + 1);
+	Curve R(steps * (P.size()/3));
+	Curve tmp(steps);
+	R.clear();
     cerr << "\t>>> evalBezier has been called with the following input:" << endl;
 
 	// to append to a std::vector, use std::insert.
 	// for example, to add 'b' to the end of 'a', we'd call 'a.insert(a.end(), b.begin(), b.end());'
 
     cerr << "\t>>> Control points (type vector<Vec3f>): "<< endl;
-    for (unsigned i = 0; i < P.size()/3; ++i) {
+    for (unsigned i = 0; i < P.size()/3; i++) {
 		int p = i * 3;
         cerr << "\t>>> "; printTranspose(P[i]); cerr << endl;
-		tmp = coreBezier(P[p], P[p + 1], P[p + 2], P[p + 3],(1,1,1),steps);
+		tmp = coreBezier(P[p], P[p + 1], P[p + 2], P[p + 3],(0,0,0),steps,false);
 		R.insert(R.end(), tmp.begin(),tmp.end());
     }
 
@@ -148,11 +164,21 @@ Curve evalBspline(const vector<Vec3f>& P, unsigned steps, bool adaptive, float e
     // We suggest you implement this function via a change of basis from
 	// B-spline to Bezier.  That way, you can just call your evalBezier function.
 
-
+	// matrix for convert bezier to bspline
+	Mat4f BsplineMatrix;
+	BsplineMatrix.setRow(0, 1.0f / 6 * Vec4f(1, -3, 3, -1));
+	BsplineMatrix.setRow(1, 1.0f / 6 * Vec4f(4, 0, -6, 3));
+	BsplineMatrix.setRow(2, 1.0f / 6 * Vec4f(1, 3, 3, -3));
+	BsplineMatrix.setRow(3, 1.0f / 6 * Vec4f(0, 0, 0, 1));
+	Curve Bspline(steps*(P.size()-3)-1);
+	Curve tmp(steps);
+	//Bspline = evalBezier(P, steps, adaptive, errorbound, minstep);
     cerr << "\t>>> evalBSpline has been called with the following input:" << endl;
 
     cerr << "\t>>> Control points (type vector< Vec3f >): "<< endl;
-    for (unsigned i = 0; i < P.size(); ++i) {
+    for (unsigned i = 0; i < P.size()-3; i++) {
+		tmp = coreBezier(P[i], P[i + 1], P[i + 2], P[i + 3], (1, 1, 1), steps,true);
+		Bspline.insert(Bspline.end(), tmp.begin(), tmp.end());
         cerr << "\t>>> "; printTranspose(P[i]); cerr << endl;
     }
 
@@ -160,7 +186,7 @@ Curve evalBspline(const vector<Vec3f>& P, unsigned steps, bool adaptive, float e
     cerr << "\t>>> Returning empty curve." << endl;
 
     // Return an empty curve right now.
-    return Curve();
+    return Bspline;
 }
 
 Curve evalCircle(float radius, unsigned steps) {
