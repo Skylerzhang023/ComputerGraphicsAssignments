@@ -56,6 +56,7 @@ void MeshWithConnectivity::computeConnectivity()
 		for (int j = 0; j < 3; ++j) {
 			int v0 = indices[i][j];
 			int v1 = indices[i][(j+1)%3];
+			// it is the edge
 			auto it = M.find(std::make_pair(v1, v0));
 			if (it == M.end()) {
 				// edge not found, add myself to mapping
@@ -201,6 +202,7 @@ void MeshWithConnectivity::LoopSubdivision() {
 				// YOUR CODE HERE (R3):
 				// Map the edge to the correct vertex index.
 				// This is just one line! Use new_vertices and the index of the position that was just pushed back to the vector.
+				new_vertices.pushback(pos);
 				}
 			}
 	}
@@ -244,7 +246,6 @@ void MeshWithConnectivity::LoopSubdivision() {
 			col = colors[v0];
 			norm = normals[v0];
 
-
 			// Stop here if we're doing the debug pass since we don't actually need to modify the mesh
 			if (debugPass)
 				return;
@@ -261,23 +262,25 @@ void MeshWithConnectivity::LoopSubdivision() {
 
 	// and then, finally, regenerate topology
 	// every triangle turns into four new ones
-	std::vector<Vec3i> new_indices;
+	std::vector<Vec3i> new_indices;//this is used for storing all the new triangles
 	new_indices.reserve(indices.size()*4);
 	for (size_t i = 0; i < indices.size(); ++i) {
 		Vec3i even = indices[i]; // start vertices of e_0, e_1, e_2
-
+		int v0 = indices[i][0];
+		int v1 = indices[i][1];
+		int v2 = indices[i][2];
 		// YOUR CODE HERE (R3):
 		// fill in X and Y (it's the same for both)
-		//auto edge_a = std::make_pair(min(X, Y), max(X, Y));
-		//auto edge_b = ...
-		//auto edge_c = ...
+		auto edge_a = std::make_pair(min(v0, v1), max(v0, v1));
+		auto edge_b = std::make_pair(min(v1, v2), max(v1, v2));
+		auto edge_c = std::make_pair(min(v2, v0), max(v2, v0));
 
 		// The edges edge_a, edge_b and edge_c now define the vertex indices via new_vertices.
 		// (The mapping is done in the loop above.)
 		// The indices define the smaller triangle inside the indices defined by "even", in order.
 		// Read the vertex indices out of new_vertices to build the small triangle "odd"
 
-		// Vec3i odd = ...
+		Vec3i odd = (new_vertices.find(edge_a), new_vertices.find(edge_a), new_vertices.find(edge_a));
 
 		// Then, construct the four smaller triangles from the surrounding big triangle  "even"
 		// and the inner one, "odd". Push them to "new_indices".
@@ -285,13 +288,16 @@ void MeshWithConnectivity::LoopSubdivision() {
 		// NOTE: REMOVE the following line after you're done with the new triangles.
 		// This just keeps the mesh intact and serves as an example on how to add new triangles.
 		new_indices.push_back( Vec3i( even[0], even[1], even[2] ) );
+		new_indices.push_back(Vec3i(even[0], odd[0], odd[2]));
+		new_indices.push_back(Vec3i(even[1], even[1], even[0]));
+		new_indices.push_back(Vec3i(even[2], even[1], even[1]));
 	}
 
 	// ADD THESE LINES when R3 is finished. Replace the originals with the repositioned data.
-	//indices = std::move(new_indices);
-	//positions = std::move(new_positions);
-	//normals = std::move(new_normals);
-	//colors = std::move(new_colors);
+	indices = std::move(new_indices);
+	positions = std::move(new_positions);
+	normals = std::move(new_normals);
+	colors = std::move(new_colors);
 }
 
 } // namespace FW
