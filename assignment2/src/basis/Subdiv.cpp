@@ -44,6 +44,7 @@ void MeshWithConnectivity::fromMesh( const Mesh<VertexPNC>& m )
 void MeshWithConnectivity::computeConnectivity()
 {
 	// assign default values. boundary edges (no neighbor on other side) are denoted by -1.
+	// this means assigning indices.size() (-1,-1,-1)to the vector 
 	neighborTris.assign(indices.size(), Vec3i(-1,-1,-1));
 	neighborEdges.assign(indices.size(), Vec3i(-1,-1,-1));
 
@@ -61,7 +62,7 @@ void MeshWithConnectivity::computeConnectivity()
 			if (it == M.end()) {
 				// edge not found, add myself to mapping
 				// (opposite direction than when finding because we look for neighbor edges)
-				M[std::make_pair(v0, v1)] = std::make_pair(i, j);
+				M[std::make_pair(v0, v1)] = std::make_pair(i, j); //i is the tri index,j is the edge index
 			} else {
 				if (it->second.first == -1)	{
 					FW::printf( "Non-manifold edge detected\n" );
@@ -70,6 +71,7 @@ void MeshWithConnectivity::computeConnectivity()
 					int other_t = it->second.first;
 					int other_e = it->second.second;
 
+					//this is for link the tris
 					neighborTris[i][j] = other_t;
 					neighborEdges[i][j] = other_e;
 
@@ -186,14 +188,28 @@ void MeshWithConnectivity::LoopSubdivision() {
 				// (if the mesh does not have any holes/empty borders). Thus, we keep track of the already
 				// visited edges in the new_vertices map. That requires the small R3 task below in the 'if' block.
 				if (new_vertices.find(edge) == new_vertices.end()) {
+					//auto k = new_vertices.find(edge);
 					// YOUR CODE HERE (R4): compute the position for odd (= new) vertex.
 					// You will need to use the neighbor information to find the correct vertices and then combine the four corner vertices with the correct weights.
 					// Be sure to see section 3.2 in the handout for an in depth explanation of the neighbor index tables; the scheme is somewhat involved.
 					Vec3f pos, col, norm;
-					// This default implementation just puts the new vertex at the edge midpoint.
-					pos = 0.5f * (positions[v0] + positions[v1]);
-					col = 0.5f * (colors[v0] + colors[v1]);
-					norm = 0.5f * (normals[v0] + normals[v1]);
+					//check whether there is now neighbor
+					if (neighborTris[i][j] == -1 || neighborEdges[i][j] == -1)
+					{
+						// This default implementation just puts the new vertex at the edge midpoint.
+						pos = 0.5f * (positions[v0] + positions[v1]);
+						col = 0.5f * (colors[v0] + colors[v1]);
+						norm = 0.5f * (normals[v0] + normals[v1]);
+					}
+					else {
+						//find the other two points
+						int v3 = indices[neighborTris[i][j]][neighborEdges[i][j]];
+						int v4 = indices[i][(j + 2) % 3];
+						pos = 3.0f / 8.0f * (positions[v0] + positions[v1]) + 1.0f / 8.0f * (positions[v3] + positions[v4]);
+						col = 3.0f / 8.0f * (colors[v0] + colors[v1]) + 1.0f / 8.0f * (colors[v3] + colors[v4]);
+						norm = 3.0f / 8.0f * (normals[v0] + normals[v1]) + 1.0f / 8.0f * (normals[v3] + normals[v4]);
+					}
+					
 
 				new_positions.push_back(pos);
 				new_colors.push_back(col);
@@ -202,13 +218,28 @@ void MeshWithConnectivity::LoopSubdivision() {
 				// YOUR CODE HERE (R3):
 				// Map the edge to the correct vertex index.
 				// This is just one line! Use new_vertices and the index of the position that was just pushed back to the vector.
-				new_vertices.pushback(pos);
+				new_vertices[edge] = new_positions.size() - 1;
+				//the new_vertices didex should be counted from 0 
 				}
 			}
 	}
 	// compute positions for even (old) vertices
 	std::vector<bool> vertexComputed(new_positions.size(), false);
+	// YOUR CODE HERE (R5): reposition the old vertices
 
+		// This default implementation just passes the data through unchanged.
+		// You need to replace these three lines with the loop over the 1-ring
+		// around vertex v0, and compute the new position as a weighted average
+		// of the other vertices as described in the handout.
+
+		// If you're having a difficult time, you can try debugging your implementation
+		// with the debug highlight mode. If you press alt, LoopSubdivision will be called
+		// for only the vertex under your mouse cursor, which should help with debugging.
+		// You can also push vertex indices into the highLightIndices vector to draw the
+		// vertices with a visible color, so you can ensure that the 1-ring generated is correct.
+		// The solution exe implements this so you can see an example of what you can do with the
+		// highlight mode there.
+		
 	for (int i = 0; i < (int)indices.size(); ++i) {
 		for (int j = 0; j < 3; ++j) {
 			int v0 = indices[i][j];
@@ -229,26 +260,55 @@ void MeshWithConnectivity::LoopSubdivision() {
 
 			Vec3f pos, col, norm;
 			// YOUR CODE HERE (R5): reposition the old vertices
+			int v_0 = indices[i][(j + 1) % 3]; //
+			int n=0;
+			int currenttri = -1;
+			int neighbortri = i;
+			int neighborVert =j+1;
+			int neighborVertIndex = indices[i][(j + 1) % 3];
+			Vec3f otherpos, othercol, othernorm;
+			bool fullconected =true;
 
-			// This default implementation just passes the data through unchanged.
-			// You need to replace these three lines with the loop over the 1-ring
-			// around vertex v0, and compute the new position as a weighted average
-			// of the other vertices as described in the handout.
+			//auto edge = std::make_pair(min(v0, v_0), max(v0, v_0));
 
-			// If you're having a difficult time, you can try debugging your implementation
-			// with the debug highlight mode. If you press alt, LoopSubdivision will be called
-			// for only the vertex under your mouse cursor, which should help with debugging.
-			// You can also push vertex indices into the highLightIndices vector to draw the
-			// vertices with a visible color, so you can ensure that the 1-ring generated is correct.
-			// The solution exe implements this so you can see an example of what you can do with the
-			// highlight mode there.
-			pos = positions[v0];
-			col = colors[v0];
-			norm = normals[v0];
+			//check how many adj vertex
+			//int k = indices[neighbortri][neighboredge];
+			//check how many adj vertex
+			//clock sequence 
+			while (neighborVertIndex != v_0 || n == 0) {
+				//add the vertice which is next to the center one (j+1)
+				otherpos += positions[neighborVertIndex];
+				othercol += colors[neighborVertIndex];
+				othernorm += normals[neighborVertIndex];
+				n++;
+				//prepare for the next
+				currenttri = neighbortri;
+				neighbortri = neighborTris[currenttri][(neighborVert + 2) % 3];
+				if (neighbortri ==-1)
+				{
+					fullconected = false;
+					break;
+				}
+				neighborVert = (neighborEdges[currenttri][(neighborVert + 2) % 3] + 2 ) % 3;
+				neighborVertIndex = indices[neighbortri][neighborVert];
 
-			// Stop here if we're doing the debug pass since we don't actually need to modify the mesh
-			if (debugPass)
-				return;
+			}
+			if (fullconected) {
+				float tmp;
+				if (n > 3) {
+					tmp = 3.0f / (8.0f * (float)n);
+				}
+				else {
+					tmp = 3.0f / 16.0f;
+				}
+				pos = positions[v0] * (1 - n * tmp) + otherpos* tmp;
+				col = colors[v0] * (1 - n * tmp) + othercol * tmp;
+				norm = normals[v0] * (1 - n * tmp) +othernorm * tmp;
+			}
+
+			else {
+				//this part is extra
+			}
 
 			new_positions[v0] = pos;
 			new_colors[v0] = col;
@@ -266,31 +326,29 @@ void MeshWithConnectivity::LoopSubdivision() {
 	new_indices.reserve(indices.size()*4);
 	for (size_t i = 0; i < indices.size(); ++i) {
 		Vec3i even = indices[i]; // start vertices of e_0, e_1, e_2
-		int v0 = indices[i][0];
-		int v1 = indices[i][1];
-		int v2 = indices[i][2];
+
 		// YOUR CODE HERE (R3):
 		// fill in X and Y (it's the same for both)
-		auto edge_a = std::make_pair(min(v0, v1), max(v0, v1));
-		auto edge_b = std::make_pair(min(v1, v2), max(v1, v2));
-		auto edge_c = std::make_pair(min(v2, v0), max(v2, v0));
+		auto edge_a = std::make_pair(min(even[0], even[1]), max(even[0], even[1]));
+		auto edge_b = std::make_pair(min(even[1], even[2]), max(even[1], even[2]));
+		auto edge_c = std::make_pair(min(even[2], even[0]), max(even[2], even[0]));
 
 		// The edges edge_a, edge_b and edge_c now define the vertex indices via new_vertices.
 		// (The mapping is done in the loop above.)
 		// The indices define the smaller triangle inside the indices defined by "even", in order.
 		// Read the vertex indices out of new_vertices to build the small triangle "odd"
 
-		Vec3i odd = (new_vertices.find(edge_a), new_vertices.find(edge_a), new_vertices.find(edge_a));
+		Vec3i odd = Vec3i(new_vertices[edge_a], new_vertices[edge_b], new_vertices[edge_c]);
 
 		// Then, construct the four smaller triangles from the surrounding big triangle  "even"
 		// and the inner one, "odd". Push them to "new_indices".
 
 		// NOTE: REMOVE the following line after you're done with the new triangles.
 		// This just keeps the mesh intact and serves as an example on how to add new triangles.
-		new_indices.push_back( Vec3i( even[0], even[1], even[2] ) );
 		new_indices.push_back(Vec3i(even[0], odd[0], odd[2]));
-		new_indices.push_back(Vec3i(even[1], even[1], even[0]));
-		new_indices.push_back(Vec3i(even[2], even[1], even[1]));
+		new_indices.push_back(Vec3i(even[1], odd[1], odd[0]));
+		new_indices.push_back(Vec3i(even[2], odd[2], odd[1]));
+		new_indices.push_back(Vec3i(odd[0], odd[1], odd[2]));
 	}
 
 	// ADD THESE LINES when R3 is finished. Replace the originals with the repositioned data.
