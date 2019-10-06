@@ -28,7 +28,8 @@ Curve coreBezier(const Vec3f& p0,
 				 const Vec3f& p2,
 				 const Vec3f& p3,
 				 const Vec3f& Binit,
-				 unsigned steps)
+				 unsigned steps,
+				bool isBezier)
 {
 	Curve R(steps + 1);
 
@@ -59,17 +60,32 @@ Curve coreBezier(const Vec3f& p0,
 	G.setRow(2, Vec4f(p0.z, p1.z, p2.z, p3.z));
 	G.setRow(3, Vec4f(0,0, 0, 0));
 
-
-	for (unsigned i = 0; i <= steps; ++i) {
-		// ...
-		// i is the index of spline point
-		float steplength = 1.0f / steps * i;
-		//Vec4f Tcol0 = (1, steplength,pow(steplength, 2), pow(steplength, 3));
-		T.setZero();
-		T.setCol(0, Vec4f(1, steplength, pow(steplength, 2), pow(steplength, 3)));
+	if (isBezier) {
+		for (unsigned i = 0; i <= steps; ++i) {
+			// ...
+			// i is the index of spline point
+			float steplength = 1.0f / steps * i;
+			//Vec4f Tcol0 = (1, steplength,pow(steplength, 2), pow(steplength, 3));
+			T.setZero();
+			T.setCol(0, Vec4f(1, steplength, pow(steplength, 2), pow(steplength, 3)));
 			R[i].V.x = (G * B * T).m00;
 			R[i].V.y = (G * B * T).m10;
 			R[i].V.z = (G * B * T).m20;
+		}
+	}
+	else
+	{
+		for (unsigned i = 0; i <= steps; ++i) {
+			// ...
+			// i is the index of spline point
+			float steplength = 1.0f / steps * i;
+			//Vec4f Tcol0 = (1, steplength,pow(steplength, 2), pow(steplength, 3));
+			T.setZero();
+			T.setCol(0, Vec4f(1, steplength, pow(steplength, 2), pow(steplength, 3)));
+			R[i].V.x = (G * BsplineMatrix * T).m00;
+			R[i].V.y = (G * BsplineMatrix * T).m10;
+			R[i].V.z = (G * BsplineMatrix * T).m20;
+		}
 	}
 
 	return R;
@@ -131,7 +147,7 @@ Curve evalBezier(const vector<Vec3f>& P, unsigned steps, bool adaptive, float er
     for (unsigned i = 0; i < P.size()/3; i++) {
 		int p = i * 3;
         cerr << "\t>>> "; printTranspose(P[i]); cerr << endl;
-		tmp = coreBezier(P[p], P[p + 1], P[p + 2], P[p + 3],(0,0,0),steps);
+		tmp = coreBezier(P[p], P[p + 1], P[p + 2], P[p + 3],(0,0,0),steps,true);
 		R.insert(R.end(), tmp.begin(),tmp.end());
     }
 
@@ -171,7 +187,7 @@ const vector<Vec3f> BsplinetoBezier(const vector<Vec3f>& P) {
 		points.setRow(2, Vec4f(P[i].z, P[i + 1].z, P[i + 2].z, P[i + 3].z));
 		points.setRow(3, Vec4f(1.0f, 1.0f, 1.0f, 1.0f));
 		//convert the original point
-		points = points * BsplineMatrix * Binvert ;
+		points = points * BsplineMatrix * Binvert;
 		if (i + 4 == P.size()) {
 			Pnew.push_back(Vec3f(points.m00, points.m10, points.m20));
 			Pnew.push_back(Vec3f(points.m01, points.m11, points.m21));
@@ -209,14 +225,16 @@ Curve evalBspline(const vector<Vec3f>& P, unsigned steps, bool adaptive, float e
     cerr << "\t>>> Control points (type vector< Vec3f >): "<< endl;
 	
 	//call the evalBezier function
-    for (unsigned i = 0; i < 1; i++) {
+    for (unsigned i = 0; i < P.size()-3; i++) {
 		vector<Vec3f> tmpp;
-		tmpp.clear();
-		tmpp.push_back(Pnew[i]);
-		tmpp.push_back(Pnew[i+1]);
-		tmpp.push_back(Pnew[i+2]);
-		tmpp.push_back(Pnew[i+3]);
-		tmp = evalBezier(tmpp, steps, adaptive,  errorbound, minstep);
+		//tmpp.clear();
+		//tmpp.push_back(Pnew[i]);
+		//tmpp.push_back(Pnew[i+1]);
+		//tmpp.push_back(Pnew[i+2]);
+		//tmpp.push_back(Pnew[i+3]);
+
+		tmp = coreBezier(P[i], P[i + 1], P[i + 2], P[i + 3], (0, 0, 0), steps, false);
+
 		Bspline.insert(Bspline.end(), tmp.begin(), tmp.end());
         cerr << "\t>>> "; printTranspose(P[i]); cerr << endl;
     }
