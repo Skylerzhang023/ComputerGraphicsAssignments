@@ -214,8 +214,7 @@ Curve evalBspline(const vector<Vec3f>& P, unsigned steps, bool adaptive, float e
 	// B-spline to Bezier.  That way, you can just call your evalBezier function.
 
 	// matrix for convert bezier to bspline
-	Curve Bspline(0);
-	Curve tmp(steps);
+	Curve Bspline(0);	Curve tmp(steps);
 	vector<Vec3f> Pnew(0);
 
 	//define the bezier matrix and bspline matrix
