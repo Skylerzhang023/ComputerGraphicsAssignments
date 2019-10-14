@@ -408,19 +408,35 @@ void App::renderSkeleton() {
 		// draw the x axis... ("right")
 		glColor3f(1, 0, 0); // red
 		// glVertex3f(...); glVertex3f(...);
-
+	
+		//Mat3f::rotation(Vec3f(1.0f, 0.0f, 0.0f), skel_.getJointRotation(i).x);
+		glVertex3f(joint_world_pos.x,joint_world_pos.y,joint_world_pos.z);
+		Vec3f xposition = joint_world_pos + scale * Mat3f::rotation(Vec3f(1.0f, 0.0f, 0.0f), skel_.getJointRotation(i).x)* Vec3f(1.0f,0.0f,0.0f);
+		glVertex3f(xposition.x,xposition.y,xposition.z);
+		
 		// ..and the y axis.. ("up")
 		glColor3f(0, 1, 0); // green
 		// glVertex3f(...); glVertex3f(...);
+		glVertex3f(joint_world_pos.x, joint_world_pos.y, joint_world_pos.z);
+		Vec3f yposition = joint_world_pos + scale * Mat3f::rotation(Vec3f(0.0f, 1.0f, 0.0f), skel_.getJointRotation(i).y) * Vec3f(0.0f, 1.0f, 0.0f);
+		glVertex3f(yposition.x, yposition.y, yposition.z);
 
 		// ..and the z axis ("ahead").
 		glColor3f(0, 0, 1); // blue
 		// glVertex3f(...); glVertex3f(...);
-
+		glVertex3f(joint_world_pos.x, joint_world_pos.y, joint_world_pos.z);
+		Vec3f zposition = joint_world_pos + scale * Mat3f::rotation(Vec3f(0.0f, 0.0f, 1.0f), skel_.getJointRotation(i).z) * Vec3f(0.0f, 0.0f, 1.0f);
+		glVertex3f(zposition.x, zposition.y, zposition.z);
 		// Finally, draw a line segment from the world position of this joint to the world
 		// position of the parent joint. You should first check if the parent exists
 		// using skel_.getJointParent(i) - it returns -1 for the root, which has no parent.
-			
+		glColor3f(1, 1, 1);
+		if (skel_.getJointParent(i) != -1) {
+			Vec3f parent_joint_world_pos;
+			Vec3f parentjoint = transforms[skel_.getJointParent(i)]* parent_joint_world_pos;
+			glVertex3f(joint_world_pos.x, joint_world_pos.y, joint_world_pos.z);
+			glVertex3f(parentjoint.x, parentjoint.y, parentjoint.z);
+			}
 		// ...
 
 		glEnd(); // we're done drawing lines	
