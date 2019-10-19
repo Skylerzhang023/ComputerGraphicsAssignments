@@ -75,6 +75,10 @@ void Skeleton::computeToBindTransforms() {
 	// Given the current to_world transforms for each bone,
 	// compute the inverse bind pose transformations (as per the lecture slides),
 	// and store the results in the member to_bind_joint of each joint.
+	for (int i = 0; i < joints_.size();++i) {
+		joints_[i].to_bind_joint= joints_[i].to_world.inverted();
+		//j.to_bind_joint.
+	}
 }
 
 vector<Mat4f> Skeleton::getToWorldTransforms() {
@@ -87,14 +91,16 @@ vector<Mat4f> Skeleton::getToWorldTransforms() {
 
 vector<Mat4f> Skeleton::getSSDTransforms() {
 	updateToWorldTransforms();
-	// YOUR CODE HERE (R4)
+	// YOUR CODE HERE (R4) 
 	// Compute the relative transformations between the bind pose and current pose,
 	// store the results in the vector "transforms". These are the transformations
 	// passed into the actual skinning code. (In the lecture slides' terms,
 	// these are the T_i * inv(B_i) matrices.)
-
 	vector<Mat4f> transforms;
-
+	transforms.clear();
+	for (int i = 0; i < joints_.size(); ++i) {
+		transforms.push_back( joints_[i].to_world * joints_[i].to_bind_joint);
+	}
 
 	return transforms;
 }
