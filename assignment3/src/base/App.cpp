@@ -242,10 +242,28 @@ void App::initRendering()
 	
 		void main()
 		{
-			float clampedCosine = clamp(dot(aNormal, directionToLight), 0.0, 1.0);
+
+			vec4 bPosition;
+			vec3 bNormal;
+			int k;
+
+			for (int i = 0; i < 4; ++i) {
+				k = aJoints1[i];
+				bPosition += uJoints[k] * aPosition* aWeights1[i];
+				bNormal += mat3(uJoints[k]) * aNormal * aWeights1[i];
+			}
+			for (int i = 0; i < 4; ++i) {
+				k = aJoints2[i];
+				bPosition += uJoints[k] * aPosition * aWeights2[i];
+				bNormal += mat3(uJoints[k]) * aNormal * aWeights2[i];
+			}
+			//aNormal = normalize(bNormal);
+			//aPosition = bPosition;
+
+			float clampedCosine = clamp(dot(normalize(bNormal), directionToLight), 0.0, 1.0);
 			vec3 litColor = vec3(clampedCosine);
 			vColor = vec4(mix(aColor.xyz, litColor, uShadingMix), 1);
-			gl_Position = uWorldToClip * aPosition;
+			gl_Position = uWorldToClip * bPosition;
 		}
 		),
 		"#version 330\n"
