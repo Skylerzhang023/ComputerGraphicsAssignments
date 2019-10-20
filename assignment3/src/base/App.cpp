@@ -481,6 +481,10 @@ vector<Vertex> App::computeSSD(const vector<WeightedVertex>& source_vertices) {
 		Mat4f normal;
 		for (int j = 0; j < WEIGHTS_PER_VERTEX  > 0;++j) {
 			int k = sv.joints[j];
+			//if (k == 17 || k == 16)
+				//k = k - 1;
+			//else if (k == 14)
+				//k = 13;
 			v.position +=  ssd_transforms[k] * sv.position * sv.weights[j];
 			v.normal +=  ssd_transforms[k].getXYZ() * sv.normal * sv.weights[j];
 		}
