@@ -105,7 +105,7 @@ GLuint render(RayTracer& ray_tracer, SceneParser& scene, const Args& args) {
 	// Accumulate into image
 	
 	// Loop over scanlines.
-	// #pragma omp parallel for // Uncomment this & enable OpenMP in project for parallel rendering (see handout)
+	#pragma omp parallel for // Uncomment this & enable OpenMP in project for parallel rendering (see handout)
 	for (int j = 0; j < args.height; ++j) {
 		// Print progress info
 		if (args.show_progress) ::printf("%.2f%% \r", lines_done * 100.0f / image_pixels.y);
@@ -151,15 +151,16 @@ GLuint render(RayTracer& ray_tracer, SceneParser& scene, const Args& args) {
 				// function in the Film class and use it instead of directly setting pixel values in the image.
 
 				// YOUR CODE HERE (R0)
+				//open r0-empty.txt to test
 				// If args.display_uv is true, we want to render a test UV image where the color of each pixel
 				// is a simple function of its position in the image. The red component should linearly increase
 				// from 0 to 1 with the x coordinate increasing from 0 to args.width. Likewise the green component
 				// should linearly increase from 0 to 1 as the y coordinate increases from 0 to args.height. Since
 				// our image is two-dimensional we can't map blue to a simple linear function and just set it to 1.
 
-				//if (args.display_uv)
-				//	sample_color = ...
-
+				if (args.display_uv)
+					//sample_color.setzero;
+					sample_color = Vec3f(float(i) / float(args.width), float(j) / float(args.height), 1.0f);
 				image->setVec4f(Vec2i(i,j), Vec4f(sample_color, 1));
 				if (depth_image) {
 					// YOUR CODE HERE (R2)
