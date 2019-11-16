@@ -162,11 +162,19 @@ GLuint render(RayTracer& ray_tracer, SceneParser& scene, const Args& args) {
 					//sample_color.setzero;
 					sample_color = Vec3f(float(i) / float(args.width), float(j) / float(args.height), 1.0f);
 				image->setVec4f(Vec2i(i,j), Vec4f(sample_color, 1));
+			
 				if (depth_image) {
 					// YOUR CODE HERE (R2)
 					// Here you should linearly map the t range [depth_min, depth_max] to the inverted range [1,0] for visualization
 					// Note the inversion; closer objects should appear brighter.
-					float f = 0.0f;
+					
+					float f;
+					if (hit.t > args.depth_max)
+						f = 0;
+					else if (hit.t < args.depth_min)
+						f = 1;
+					else
+						f = (args.depth_max -hit.t)/(args.depth_max - args.depth_min) ;
 					depth_image->setVec4f(Vec2i(i, j), Vec4f(Vec3f(f), 1));
 				}
 				if (normals_image) {

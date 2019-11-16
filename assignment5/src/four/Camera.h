@@ -17,8 +17,10 @@ public:
 		// YOUR CODE HERE (R1)
 		// Given floating-point pixel coordinates (px,py), you should return the corresponding normalized screen coordinates in [-1,1]^2
 		// Pay attention to which direction is "up" :)
-
-		return FW::Vec2f();
+		float i = pixel.x - imageSize.x/2;
+		float j = pixel.y - imageSize.y / 2;
+		FW::Vec2f result = FW::Vec2f(i/ imageSize.x, j/ imageSize.y);
+		return result;
 	}
 	
 	virtual float getTMin() const = 0 ; 
@@ -70,7 +72,14 @@ public:
 	virtual Ray generateRay(const FW::Vec2f& point) {
 		// YOUR CODE HERE (R1)
 		// Generate a ray with the given screen coordinates, which you should assume lie in [-1,1]^2
-		return Ray(FW::Vec3f(0.0f), FW::Vec3f(0.0f));
+		//RayTracer::traceRay()
+		float i = point.x;
+		float j = point.y;
+		// Origin = e + x * size * u + y * size * v
+			//Direction is constant : w
+		FW :: Vec3f origin = center + point.x * this->size * this->horizontal + point.y * this->size * this->up;
+		//this->center = origin;
+		return Ray(origin, this->direction);
 	}
 
 	bool isOrtho() const override { return true; }
@@ -104,7 +113,12 @@ public:
 		// Generate a ray with the given screen coordinates, which you should assume lie in [-1,1]^2
 		// How to do this is described in the lecture notes.
 
-		return Ray( FW::Vec3f(0.0f), FW::Vec3f(0.0f) );
+		//in perspective camera the origin is the center
+
+		float d = 1 / (tanf(this->fov_angle / 2));
+		FW::Vec3f direction = (point.x - this->center.x) * this->horizontal + (point.y - this->center.y) * this->up + d*this->direction;
+		direction = direction.normalized();
+		return Ray( this->center,direction );
 	}
 
 	bool isOrtho() const override { return false; }

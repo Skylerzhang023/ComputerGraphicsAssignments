@@ -3,7 +3,7 @@
 #
 # Assignment 5: Ray Tracing
 
-Student name:
+Student name:Yitian Zhang
 Student number:
 Hours spent on requirements (approx.):
 Hours spent on extra credit (approx.):
