@@ -52,7 +52,22 @@ bool Plane::intersect( const Ray& r, Hit& h, float tmin ) const {
 	// origin + direction * t = p(t)
 	// origin . normal + t * direction . normal = d;
 	// t = (d - origin . normal) / (direction . normal);
-	return false;
+	bool intersected = false;
+	float t= FLT_MAX;
+	//float t = (t_m < tmin) ? t_p : t_m;
+	Vec3f normal = this->normal();
+	Vec3f r0 = r.origin;
+	Vec3f rd = r.direction;
+	float d = -offset();
+
+	if(dot(r.direction,normal)!=0)
+		t = -(d + dot(normal , r0)) / dot(normal , rd);
+	if (t < h.t && t>tmin) {
+		intersected = true;
+		h.set(t, this->material(), normal);
+	}
+	return intersected;
+
 }
 
 Transform::Transform(const Mat4f& m, Object3D* o) :
@@ -137,7 +152,63 @@ bool Triangle::intersect( const Ray& r, Hit& h, float tmin ) const {
 	// YOUR CODE HERE (R6)
 	// Intersect the triangle with the ray!
 	// Again, pay attention to respecting tmin and h.t!
-	return false;
+	float t = _LMAX;
+	
+	Vec3f a = vertices_[0];
+	Vec3f b = vertices_[1];
+	Vec3f c = vertices_[2];
+	//calculate the normal
+	Vec3f ac = c - a;
+	Vec3f ab = b - a;
+	Vec3f normal = cross(ac,ab).normalized();
+	//check whether the ray is parallel with the triangle
+	if (dot(normal, r.direction) == 0)
+		return false;
+
+	Mat3f target;
+	Mat3f target_t,target_b,target_c;
+	target.setRow(0, Vec3f(a.x - b.x, a.x - c.x, r.direction.x));
+	target.setRow(1, Vec3f(a.y - b.y, a.y - c.y, r.direction.y));
+	target.setRow(2, Vec3f(a.z - b.z, a.z - c.z, r.direction.z));
+
+
+	/*target_t.setRow(0, Vec3f(a.x - b.x, a.x - c.x, a.x - r.origin.x));
+	target_t.setRow(1, Vec3f(a.y - b.y, a.y - c.y, a.y - r.origin.y));
+	target_t.setRow(2, Vec3f(a.z - b.z, a.z - c.z, a.z - r.origin.z));*/
+
+	target_t.setCol(0, Vec3f(a.x - b.x, a.y - b.y, a.z - b.z));
+	target_t.setCol(1, Vec3f(a.x - c.x, a.y - c.y, a.z - c.z));
+	target_t.setCol(2, Vec3f(a.x - r.origin.x, a.y - r.origin.y, a.z - r.origin.z));
+
+	target_b.setCol(0, Vec3f(a.x - r.origin.x, a.y - r.origin.y, a.z - r.origin.z));
+	target_b.setCol(1, Vec3f(a.x - c.x, a.y - c.y, a.z - c.z));
+	target_b.setCol(2, Vec3f(r.direction.x, r.direction.y, r.direction.z));
+
+	target_c.setCol(0, Vec3f(a.x - b.x, a.y - b.y, a.z - b.z));
+	target_c.setCol(1, Vec3f(a.x - r.origin.x, a.y - r.origin.y, a.z - r.origin.z));
+	target_c.setCol(2, Vec3f(r.direction.x, r.direction.y, r.direction.z));
+
+	float t1, tt,tb,tc;
+	t1 = target.det();
+	tt = target_t.det();
+	tb = target_b.det();
+	tc = target_c.det();
+
+	float c1, b1;
+
+	t = tt / t1;
+	b1 = tb / t1;
+	c1 = tc / t1;
+	//also need to check their sum is 1
+
+	if (h.t > t && t > tmin && b1>=0 && b1<=1 && c1 >= 0 && c1 <= 1 && b1+c1<=1) {
+		h.set(t, this->material(), -normal);
+		return true;
+	}
+	else {
+		return false;
+	}
+		
 }
 
 const Vec3f& Triangle::vertex(int i) const {

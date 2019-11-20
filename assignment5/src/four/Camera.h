@@ -17,9 +17,9 @@ public:
 		// YOUR CODE HERE (R1)
 		// Given floating-point pixel coordinates (px,py), you should return the corresponding normalized screen coordinates in [-1,1]^2
 		// Pay attention to which direction is "up" :)
-		float i = pixel.x - imageSize.x/2;
+		float i = pixel.x - imageSize.x / 2;
 		float j = pixel.y - imageSize.y / 2;
-		FW::Vec2f result = FW::Vec2f(i/ imageSize.x, j/ imageSize.y);
+		FW::Vec2f result = FW::Vec2f(i*2/ imageSize.x, -j*2/ imageSize.y);
 		return result;
 	}
 	
@@ -73,11 +73,10 @@ public:
 		// YOUR CODE HERE (R1)
 		// Generate a ray with the given screen coordinates, which you should assume lie in [-1,1]^2
 		//RayTracer::traceRay()
-		float i = point.x;
-		float j = point.y;
 		// Origin = e + x * size * u + y * size * v
-			//Direction is constant : w
-		FW :: Vec3f origin = center + point.x * this->size * this->horizontal + point.y * this->size * this->up;
+		//Direction is constant : w
+		float acsize = this->size / 2;
+		FW :: Vec3f origin = center + point.x * acsize * this->horizontal + point.y* acsize * this->up;
 		//this->center = origin;
 		return Ray(origin, this->direction);
 	}
@@ -114,11 +113,12 @@ public:
 		// How to do this is described in the lecture notes.
 
 		//in perspective camera the origin is the center
-
-		float d = 1 / (tanf(this->fov_angle / 2));
-		FW::Vec3f direction = (point.x - this->center.x) * this->horizontal + (point.y - this->center.y) * this->up + d*this->direction;
-		direction = direction.normalized();
-		return Ray( this->center,direction );
+		float halfFOV = this->fov_angle / 2;
+		float d = 1 / tanf(halfFOV);
+		FW::Vec3f direction1 = point.x * this->horizontal + point.y  * this->up + d * this->direction;
+		direction1 = direction1.normalized();
+		//direction.normalize();
+		return Ray(this->center,direction1 );
 	}
 
 	bool isOrtho() const override { return false; }

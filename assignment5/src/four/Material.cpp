@@ -3,6 +3,7 @@
 #include "lights.hpp"
 #include "VecUtils.h"
 
+
 using namespace FW;
 
 Vec3f PhongMaterial::shade(const Ray &ray, const Hit &hit, 
@@ -22,6 +23,32 @@ Vec3f PhongMaterial::shade(const Ray &ray, const Hit &hit,
 	// anything if the light is below the local horizon!
 
 	Vec3f answer = Vec3f(0.0f);
+	//diffuse
+	Vec3f normal = hit.normal;
+	Vec3f point = ray.pointAtParameter(hit.t);
+
+	if (!shade_back)
+		normal = -normal;
+	if (dot(hit.normal, dir_to_light) > 0)
+		answer +=incident_intensity* hit.material->diffuse_color(point) * dot(hit.normal, dir_to_light);
+		//answer += 0;
+	else 
+		answer += 0;
+	
+	//specular
+	Vec3f r = dir_to_light - 2 * dot(dir_to_light, hit.normal) * hit.normal;
+	r = r.normalized();
+	if (dot(ray.direction, r)>0) {
+		float test = dot(ray.direction, r);
+		float test2 = exponent();
+		Vec3f test3 = hit.material->reflective_color(point);
+		answer += incident_intensity * specular_color() * FW::pow(dot(ray.direction, r), exponent());
+		//answer += incident_intensity *hit.material* FW::pow(dot(ray.direction, r), exponent());
+	}
+	else
+		answer += 0;
+		
+
 
 	return answer;
 }
