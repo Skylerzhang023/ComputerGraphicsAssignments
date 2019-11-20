@@ -1,1 +1,1 @@
-call render_default scenes\r5_spheres_plane.txt
+call render_options scenes\r8_reflective_sphere.txt -size 200 200 -shadows -bounces 2 -weight 0.01 -depth 0 10

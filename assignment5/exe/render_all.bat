@@ -15,7 +15,7 @@ call render_default scenes\r6_cube_orthographic.txt
 call render_default scenes\r6_cube_perspective.txt
 call render_options scenes\r7_colored_shadows.txt -size 200 200 -shadows -depth 0 10
 call render_options scenes\r7_simple_shadow.txt -size 200 200 -shadows -depth 0 10
-call render_options scenes\r8_reflective_sphere.txt -size 200 200 -shadows -bounces 3 -weight 0.01 -depth 0 10
+call render_options scenes\r8_reflective_sphere.txt -size 200 200 -shadows -bounces 1 -weight 0.01 -depth 0 10
 call render_default scenes\r9_sphere_triangle.txt
 
 call render_default scenes\extra_xform_axes_cube.txt

@@ -21,7 +21,8 @@ Vec3f mirrorDirection(const Vec3f& normal, const Vec3f& incoming) {
 	// YOUR CODE HERE (R8)
 	// Pay attention to the direction which things point towards, and that you only
 	// pass in normalized vectors.
-	return Vec3f();
+	Vec3f Refdirection =incoming - 2 * dot(incoming, normal) * normal;
+	return Refdirection;
 }
 
 bool transmittedDirection(const Vec3f& normal, const Vec3f& incoming, 
@@ -70,21 +71,39 @@ Vec3f RayTracer::traceRay(Ray& ray, float tmin, int bounces, float refr_index, H
 	// For R4, loop over all the lights in the scene and add their contributions to the answer.
 	// If you wish to include the shadow rays in the debug visualization, insert the segments
 	// into the debug_rays list similar to what is done to the primary rays after intersection.
+	// For R7, if args_.shadows is on, also shoot a shadow ray from the hit point to the light
+	// to confirm it isn't blocked; if it is, ignore the contribution of the light.
 	//r4
 	for (int i = 0; i < scene_.getNumLights(); ++i) {
 		Vec3f dir_to_light, incident_intensity;
 		float distance;
-		scene_.getLight(i)->getIncidentIllumination(ray.pointAtParameter(hit.t),dir_to_light, incident_intensity,distance);
-		//Vec3f direction = ray.pointAtParameter(hit.t) - scene_.getLight(i).;
-		if(dot(dir_to_light,hit.normal))
-			answer = answer + m->shade(ray,hit,dir_to_light,incident_intensity,false);
-		else
-			answer = answer + m->shade(ray, hit, dir_to_light, incident_intensity, true);
-	}
-	//r7
+		scene_.getLight(i)->getIncidentIllumination(ray.pointAtParameter(hit.t), dir_to_light, incident_intensity, distance);
+		//for r7 
+		bool blocked = false;
+		Hit hit2 = Hit();
+		if (args_.shadows) {
+			Ray shadowray(ray.pointAtParameter(hit.t-0.001f),dir_to_light);
+			blocked = scene_.getGroup()->intersect(shadowray, hit2, tmin);
 
-	// For R7, if args_.shadows is on, also shoot a shadow ray from the hit point to the light
-	// to confirm it isn't blocked; if it is, ignore the contribution of the light.
+			if (!blocked) {
+				if (dot(dir_to_light, hit.normal))
+					answer = answer + m->shade(ray, hit, dir_to_light, incident_intensity, false);
+				else
+					answer = answer + m->shade(ray, hit, dir_to_light, incident_intensity, true);
+			}
+		}
+		else {
+			if (dot(dir_to_light, hit.normal))
+				answer = answer + m->shade(ray, hit, dir_to_light, incident_intensity, false);
+			else
+				answer = answer + m->shade(ray, hit, dir_to_light, incident_intensity, true);
+
+		}
+
+			
+	}
+
+	
 
 	// are there bounces left?
 	if (bounces >= 1) {
@@ -94,6 +113,14 @@ Vec3f RayTracer::traceRay(Ray& ray, float tmin, int bounces, float refr_index, H
 			// Generate and trace a reflected ray to the ideal mirror direction and add
 			// the contribution to the result. Remember to modulate the returned light
 			// by the reflective color of the material of the hit point.
+
+			float epsilon=0.01f; //for avoiding self reflection
+			Vec3f Refdirection = mirrorDirection(normal, ray.direction);
+			Ray RefRay(point, Refdirection);
+			Hit Ref = Hit();
+			bounces--;
+			answer = answer + refr_index * m->reflective_color(point)*traceRay(RefRay, epsilon, bounces, refr_index, Ref, debug_color);
+
 		}
 
 		// refraction, but only if surface is transparent!
