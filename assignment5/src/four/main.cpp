@@ -116,6 +116,7 @@ GLuint render(RayTracer& ray_tracer, SceneParser& scene, const Args& args) {
 		// Loop over pixels on a scanline
 		for (int i = 0; i < args.width; ++i) {
 			// Loop through all the samples for this pixel.
+			Vec3f AvgSampleColor = Vec3f(0.0f);
 			for (int n = 0; n < args.num_samples; ++n) {
 				// Get the offset of the sample inside the pixel. 
 				// You need to fill in the implementation for this function when implementing supersampling.
@@ -145,7 +146,12 @@ GLuint render(RayTracer& ray_tracer, SceneParser& scene, const Args& args) {
 				// The requirement is just to take an average of all the samples within the pixel
 				// (so-called "box filtering"). Note that this starter code does not take an average,
 				// it just assumes the first and only sample is the final color.
-
+				//the center sample point is i,j
+				AvgSampleColor = AvgSampleColor + sample_color;
+				if (n == args.num_samples - 1) {
+					AvgSampleColor = AvgSampleColor / n;
+					image->setVec4f(Vec2i(i, j), Vec4f(AvgSampleColor, 1));
+				}
 				// For extra credit, you can implement more sophisticated ones, such as "tent" and bicubic
 				// "Mitchell-Netravali" filters. This requires you to implement the addSample()
 				// function in the Film class and use it instead of directly setting pixel values in the image.
@@ -158,10 +164,13 @@ GLuint render(RayTracer& ray_tracer, SceneParser& scene, const Args& args) {
 				// should linearly increase from 0 to 1 as the y coordinate increases from 0 to args.height. Since
 				// our image is two-dimensional we can't map blue to a simple linear function and just set it to 1.
 
-				if (args.display_uv)
+				if (args.display_uv) {
 					//sample_color.setzero;
 					sample_color = Vec3f(float(i) / float(args.width), float(j) / float(args.height), 1.0f);
-				image->setVec4f(Vec2i(i,j), Vec4f(sample_color, 1));
+					image->setVec4f(Vec2i(i, j), Vec4f(sample_color, 1));
+				}
+
+				//image->setVec4f(Vec2i(i,j), Vec4f(sample_color, 1));
 			
 				if (depth_image) {
 					// YOUR CODE HERE (R2)
