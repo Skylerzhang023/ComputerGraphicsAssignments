@@ -30,7 +30,7 @@ Vec2f UniformSampler::getSamplePosition(int i) {
 	// YOUR CODE HERE (R9)
 	// Return a uniformly distributed random 2-vector within the unit square [0,1]^2
 	
-	return Vec2f(rand() / double(RAND_MAX), rand() / double(RAND_MAX));
+	return Vec2f(float(rand() % 100) / 100.0f, float(rand() % 100) / 100.0f);
 }
 
 RegularSampler::RegularSampler(int nSamples) :
@@ -48,10 +48,10 @@ Vec2f RegularSampler::getSamplePosition(int n) {
 	// The starter code only supports one sample per pixel.
 	//assert(n == 0);
 	int j = n / m_dim;
-	int i = n - j * m_dim;
+	int i = n % m_dim;
 	float gridsize = 1.0f / m_dim;
 
-	return Vec2f(gridsize*(i+2)/2, gridsize * (j+2)/2);
+	return Vec2f(gridsize*(i+1)/2, gridsize * (j+1)/2);
 
 }
 
@@ -69,11 +69,11 @@ Vec2f JitteredSampler::getSamplePosition(int n) {
 	// Return a randomly generated sample through Nth subpixel.
 
 	int j = n / m_dim;
-	int i = n - j * m_dim;
+	int i = n % m_dim;
 	float gridsize = 1.0f / m_dim;
 	//(rand() % (b - a + 1)) + a;
-	float subi = i * gridsize / 2 + gridsize * rand() / double(RAND_MAX);
-	float subj = j * gridsize / 2 + gridsize * rand() / double(RAND_MAX);
+	float subi = i * gridsize  + double(gridsize) * float(rand() % 100) / 100.0f;
+	float subj = j * gridsize + double(gridsize) * float(rand() % 100) / 100.0f;
 
 	return Vec2f(subi, subj);
 }

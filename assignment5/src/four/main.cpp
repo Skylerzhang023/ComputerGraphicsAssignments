@@ -116,7 +116,6 @@ GLuint render(RayTracer& ray_tracer, SceneParser& scene, const Args& args) {
 		// Loop over pixels on a scanline
 		for (int i = 0; i < args.width; ++i) {
 			// Loop through all the samples for this pixel.
-			Vec3f AvgSampleColor = Vec3f(0.0f);
 			for (int n = 0; n < args.num_samples; ++n) {
 				// Get the offset of the sample inside the pixel. 
 				// You need to fill in the implementation for this function when implementing supersampling.
@@ -146,12 +145,13 @@ GLuint render(RayTracer& ray_tracer, SceneParser& scene, const Args& args) {
 				// The requirement is just to take an average of all the samples within the pixel
 				// (so-called "box filtering"). Note that this starter code does not take an average,
 				// it just assumes the first and only sample is the final color.
+
 				//the center sample point is i,j
-				AvgSampleColor = AvgSampleColor + sample_color;
-				if (n == args.num_samples - 1) {
-					AvgSampleColor = AvgSampleColor / n;
-					image->setVec4f(Vec2i(i, j), Vec4f(AvgSampleColor, 1));
-				}
+				//if (n == args.num_samples - 1) {
+					//AvgSampleColor = AvgSampleColor / n;
+					//image->setVec4f(Vec2i(i, j), Vec4f(AvgSampleColor, 1));
+				//}
+
 				// For extra credit, you can implement more sophisticated ones, such as "tent" and bicubic
 				// "Mitchell-Netravali" filters. This requires you to implement the addSample()
 				// function in the Film class and use it instead of directly setting pixel values in the image.
@@ -170,8 +170,9 @@ GLuint render(RayTracer& ray_tracer, SceneParser& scene, const Args& args) {
 					image->setVec4f(Vec2i(i, j), Vec4f(sample_color, 1));
 				}
 
-				//image->setVec4f(Vec2i(i,j), Vec4f(sample_color, 1));
-			
+				image->setVec4f(Vec2i(i,j), Vec4f(sample_color, 1));
+				//image->setVec4f(Vec2i(i, j), Vec4f(AvgSampleColor, 1));
+				
 				if (depth_image) {
 					// YOUR CODE HERE (R2)
 					// Here you should linearly map the t range [depth_min, depth_max] to the inverted range [1,0] for visualization

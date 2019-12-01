@@ -31,7 +31,6 @@ Vec3f PhongMaterial::shade(const Ray &ray, const Hit &hit,
 		normal = -normal;
 	if (dot(hit.normal, dir_to_light) > 0)
 		answer +=incident_intensity* hit.material->diffuse_color(point) * dot(hit.normal, dir_to_light);
-		//answer += 0;
 	else 
 		answer += 0;
 	
