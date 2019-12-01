@@ -146,12 +146,15 @@ GLuint render(RayTracer& ray_tracer, SceneParser& scene, const Args& args) {
 				// (so-called "box filtering"). Note that this starter code does not take an average,
 				// it just assumes the first and only sample is the final color.
 
+<<<<<<< HEAD
 				//the center sample point is i,j
 				//if (n == args.num_samples - 1) {
 					//AvgSampleColor = AvgSampleColor / n;
 					//image->setVec4f(Vec2i(i, j), Vec4f(AvgSampleColor, 1));
 				//}
 
+=======
+>>>>>>> parent of dcbd1c4... finish a9
 				// For extra credit, you can implement more sophisticated ones, such as "tent" and bicubic
 				// "Mitchell-Netravali" filters. This requires you to implement the addSample()
 				// function in the Film class and use it instead of directly setting pixel values in the image.
@@ -164,15 +167,20 @@ GLuint render(RayTracer& ray_tracer, SceneParser& scene, const Args& args) {
 				// should linearly increase from 0 to 1 as the y coordinate increases from 0 to args.height. Since
 				// our image is two-dimensional we can't map blue to a simple linear function and just set it to 1.
 
-				if (args.display_uv) {
+				if (args.display_uv)
 					//sample_color.setzero;
 					sample_color = Vec3f(float(i) / float(args.width), float(j) / float(args.height), 1.0f);
+<<<<<<< HEAD
 					image->setVec4f(Vec2i(i, j), Vec4f(sample_color, 1));
 				}
 
 				image->setVec4f(Vec2i(i,j), Vec4f(sample_color, 1));
 				//image->setVec4f(Vec2i(i, j), Vec4f(AvgSampleColor, 1));
 				
+=======
+				image->setVec4f(Vec2i(i,j), Vec4f(sample_color, 1));
+			
+>>>>>>> parent of dcbd1c4... finish a9
 				if (depth_image) {
 					// YOUR CODE HERE (R2)
 					// Here you should linearly map the t range [depth_min, depth_max] to the inverted range [1,0] for visualization
